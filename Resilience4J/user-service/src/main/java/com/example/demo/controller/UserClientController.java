@@ -17,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import com.example.demo.entity.OrderDTO;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 @RestController
 @RequestMapping("/user-service")
@@ -30,14 +31,15 @@ public class UserClientController {
 
     private static final String BASEURL = "http://localhost:9191/orders";
 
-    private int attempt=1;
+    private int attempt = 1;
 
 
     @GetMapping("/displayOrders")
-    @CircuitBreaker(name =USER_SERVICE,fallbackMethod = "getAllAvailableProducts")
+    //@CircuitBreaker(name = USER_SERVICE, fallbackMethod = "getAllAvailableProducts")
+    @Retry(name = USER_SERVICE, fallbackMethod = "getAllAvailableProducts")
     public List<OrderDTO> displayOrders(@RequestParam("category") String category) {
     	String url = (category == null || category.isEmpty()) ? BASEURL : BASEURL + "/" + category;
-        System.out.println("retry method called " + attempt++ + " times " + "at " + new Date());
+        System.out.println("Retry method called " + attempt++ + " times " + "on " + new Date());
         return restTemplate.getForObject(url, ArrayList.class);
     }
 
