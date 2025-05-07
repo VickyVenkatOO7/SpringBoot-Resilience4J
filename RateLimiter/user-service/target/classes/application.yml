@@ -1,0 +1,20 @@
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+
+resilience4j:
+  ratelimiter:
+    instances:
+      userService:
+        limit-for-period: 5
+        limit-refresh-period: 10s
+        timeout-duration: 500ms
