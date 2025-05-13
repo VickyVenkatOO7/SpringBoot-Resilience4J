@@ -3,6 +3,7 @@ package com.example.demo.controller;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,9 +18,6 @@ import org.springframework.web.client.RestTemplate;
 import com.example.demo.entity.OrderDTO;
 
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
-import io.github.resilience4j.retry.annotation.Retry;
 
 @RestController
 @RequestMapping("/user-service")
@@ -37,24 +35,31 @@ public class UserClientController {
 
 
     @GetMapping("/displayOrders")
-    @Bulkhead(name = USER_SERVICE, type = Bulkhead.Type.SEMAPHORE, fallbackMethod = "getAllAvailableProducts")
-    public List<OrderDTO> displayOrders(@RequestParam("category") String category) throws InterruptedException {
-    	String url = (category == null || category.isEmpty()) ? BASEURL : BASEURL + "/" + category;
-    	Thread.sleep(5000);
-        System.out.println("Semaphore Bulkhead method called " + attempt++ + " times " + "on " + new Date());
-        return restTemplate.getForObject(url, ArrayList.class);
+    @Bulkhead(name = USER_SERVICE, type = Bulkhead.Type.THREADPOOL, fallbackMethod = "getAllAvailableProducts")
+    public CompletableFuture<List<OrderDTO>> displayOrders(@RequestParam("category") String category) {
+    	return CompletableFuture.supplyAsync(() -> {
+    		String url = (category == null || category.isEmpty()) ? BASEURL : BASEURL + "/" + category;
+    		try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+	            throw new RuntimeException("Thread was interrupted", e);
+			}
+            System.out.println("ThreadPool Bulkhead method called " + attempt++ + " times " + "on " + new Date());
+            return restTemplate.getForObject(url, ArrayList.class);
+    	});
     }
 
 
-    public List<OrderDTO> getAllAvailableProducts(String category, Throwable t){
-    	System.out.println("Fallback due to Semaphore Bulkhead: " + t.getMessage());
-        return Stream.of(
-                new OrderDTO(119, "LED TV", "electronics", "white", 45000),
+    public CompletableFuture<List<OrderDTO>> getAllAvailableProducts(String category, Throwable t){
+    	System.out.println("Fallback due to ThreadPool Bulkhead: " + t.getMessage());
+        return CompletableFuture.supplyAsync(() -> Stream.of(
+        		new OrderDTO(119, "LED TV", "electronics", "white", 45000),
                 new OrderDTO(345, "Headset", "electronics", "black", 7000),
                 new OrderDTO(475, "Sound bar", "electronics", "black", 13000),
                 new OrderDTO(574, "Puma Shoes", "foot wear", "black & white", 4600),
                 new OrderDTO(678, "Vegetable chopper", "kitchen", "blue", 999),
                 new OrderDTO(532, "Oven Gloves", "kitchen", "gray", 745)
-        ).collect(Collectors.toList());
+        ).collect(Collectors.toList()));
     }
 }

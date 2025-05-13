@@ -36,8 +36,7 @@ public class CatalogServiceController {
     }
 
 	@GetMapping
-	public List<Order> getOrders() throws InterruptedException{
-		Thread.sleep(5000);
+	public List<Order> getOrders(){
 		return orderRepo.findAll();
 	}
 	

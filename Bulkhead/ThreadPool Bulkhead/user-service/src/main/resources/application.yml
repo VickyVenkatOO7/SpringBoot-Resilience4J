@@ -1,0 +1,20 @@
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+
+resilience4j:
+    thread-pool-bulkhead:
+      instances:
+        userService:
+          max-thread-pool-size: 5
+          core-thread-pool-size: 3
+          queue-capacity: 10
