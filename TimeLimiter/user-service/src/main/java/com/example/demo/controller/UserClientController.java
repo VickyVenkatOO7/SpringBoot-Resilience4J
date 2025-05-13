@@ -42,14 +42,14 @@ public class UserClientController {
     public CompletableFuture<List<OrderDTO>> displayOrders(@RequestParam("category") String category) {
     	return CompletableFuture.supplyAsync(() -> {
     		String url = (category == null || category.isEmpty()) ? BASEURL : BASEURL + "/" + category;
-            System.out.println("TimeLimiter method called " + attempt++ + " times " + "on " + new Date());
-            return restTemplate.getForObject(url, ArrayList.class);
+        	System.out.println("TimeLimiter method called " + attempt++ + " times " + "on " + new Date());
+        	return restTemplate.getForObject(url, ArrayList.class);
     	});
     }
 
 
     public CompletableFuture<List<OrderDTO>> getAllAvailableProducts(Exception e){
-    	System.out.println("Fallback due to RateLimiter: " + e.getMessage());
+    	System.out.println("Fallback due to TimeLimiter: " + e.getMessage());
         List<OrderDTO> fallbackOrders = Stream.of(
                 new OrderDTO(119, "LED TV", "electronics", "white", 45000),
                 new OrderDTO(345, "Headset", "electronics", "black", 7000),
