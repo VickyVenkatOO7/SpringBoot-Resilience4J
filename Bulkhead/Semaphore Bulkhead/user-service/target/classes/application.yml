@@ -1,0 +1,19 @@
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
+
+
+resilience4j:
+  bulkhead:
+    instances:
+      userService:
+        max-concurrent-calls: 3
+        max-wait-duration: 0
